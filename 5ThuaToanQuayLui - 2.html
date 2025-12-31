@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Mô phỏng quay lui sinh dãy nhị phân</title>
+
+<style>
+body {
+    font-family: Consolas, monospace;
+    background: #f4f6f8;
+    margin: 0;
+}
+
+h1 {
+    text-align: center;
+    color: #2c3e50;
+}
+
+.container {
+    display: flex;
+    padding: 10px;
+}
+
+/* KHỐI CODE */
+.code {
+    width: 45%;
+    background: #1e1e1e;
+    color: #dcdcdc;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.line {
+    padding: 4px;
+}
+
+.active {
+    background: #3a3d41;
+    color: #ffd700;
+}
+
+/* KHỐI MÔ PHỎNG */
+.sim {
+    width: 55%;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-left: 10px;
+}
+
+.controls button {
+    padding: 6px 12px;
+    margin-right: 5px;
+}
+
+.cell {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 2px solid #333;
+    line-height: 40px;
+    margin: 5px;
+    font-size: 18px;
+}
+
+.current {
+    background: #ffeaa7;
+}
+
+.output {
+    margin-top: 10px;
+    font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>MÔ PHỎNG QUAY LUI SINH DÃY NHỊ PHÂN</h1>
+
+<div class="container">
+
+<!-- HIỂN THỊ CODE -->
+<div class="code">
+    <div class="line" id="l1">1. Try(i):</div>
+    <div class="line" id="l2">2. &nbsp;&nbsp;for v ∈ {0,1}:</div>
+    <div class="line" id="l3">3. &nbsp;&nbsp;&nbsp;&nbsp;a[i] = v</div>
+    <div class="line" id="l4">4. &nbsp;&nbsp;&nbsp;&nbsp;if i == n-1:</div>
+    <div class="line" id="l5">5. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output a</div>
+    <div class="line" id="l6">6. &nbsp;&nbsp;&nbsp;&nbsp;else:</div>
+    <div class="line" id="l7">7. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Try(i+1)</div>
+</div>
+
+<!-- MÔ PHỎNG -->
+<div class="sim">
+
+<div class="controls">
+    n =
+    <input type="number" id="n" value="3" min="1" max="6">
+    <button onclick="start()">▶️ Bắt đầu</button>
+    <button onclick="pause()">⏸️ Tạm dừng</button>
+    <button onclick="resume()">▶️ Tiếp tục</button>
+    <button onclick="stop()">⏹️ Kết thúc</button>
+</div>
+
+<div id="state"></div>
+
+<div class="output">
+    <b>Kết quả:</b>
+    <div id="out"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+let n, a = [];
+let delay = 600;
+let paused = false;
+let stopped = false;
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function waitIfPaused() {
+    while (paused) await sleep(200);
+    if (stopped) throw "STOP";
+}
+
+function highlight(id) {
+    document.querySelectorAll('.line').forEach(l => l.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function render(pos) {
+    let s = document.getElementById("state");
+    s.innerHTML = "";
+    for (let i = 0; i < n; i++) {
+        let d = document.createElement("div");
+        d.className = "cell";
+        d.innerText = a[i] ?? "";
+        if (i === pos) d.classList.add("current");
+        s.appendChild(d);
+    }
+}
+
+async function Try(i) {
+    highlight("l1"); await sleep(delay); await waitIfPaused();
+    highlight("l2"); await sleep(delay); await waitIfPaused();
+
+    for (let v = 0; v <= 1; v++) {
+        highlight("l3");
+        a[i] = v;
+        render(i);
+        await sleep(delay); await waitIfPaused();
+
+        highlight("l4"); await sleep(delay); await waitIfPaused();
+
+        if (i === n - 1) {
+            highlight("l5");
+            document.getElementById("out").innerHTML += a.join("") + "<br>";
+            await sleep(delay); await waitIfPaused();
+        } else {
+            highlight("l6"); await sleep(delay); await waitIfPaused();
+            highlight("l7");
+            await Try(i + 1);
+        }
+    }
+}
+
+async function start() {
+    stop();
+    stopped = false;
+    paused = false;
+    n = parseInt(document.getElementById("n").value);
+    a = new Array(n);
+    document.getElementById("out").innerHTML = "";
+    document.getElementById("state").innerHTML = "";
+    try {
+        await Try(0);
+    } catch (e) {}
+}
+
+function pause() {
+    paused = true;
+}
+
+function resume() {
+    paused = false;
+}
+
+function stop() {
+    paused = false;
+    stopped = true;
+    document.querySelectorAll('.line').forEach(l => l.classList.remove('active'));
+}
+</script>
+
+</body>
+</html>
